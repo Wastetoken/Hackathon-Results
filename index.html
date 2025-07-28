@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project Search</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .container { max-width: 900px; margin: 40px auto; }
+    input[type="text"] { width: 100%; padding: 10px; margin-bottom: 20px; font-size: 1.2em; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    tr:hover { background: #f9f9f9; }
+    a { color: #0077cc; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr { display: block; }
+      th { position: absolute; left: -9999px; }
+      td { border: none; position: relative; padding-left: 50%; }
+      td:before { 
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        white-space: nowrap;
+        font-weight: bold;
+      }
+      td:nth-of-type(1):before { content: "NAME"; }
+      td:nth-of-type(2):before { content: "DEVPOST"; }
+      td:nth-of-type(3):before { content: "DESCRIPTION"; }
+    }
+  </style>
+</head>
+<body>
+  <div id="hero-root" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;"></div>
+  <div class="container" style="position:relative;z-index:1;">
+    <h1>Project Search</h1>
+    <input type="text" id="searchBar" placeholder="Type to search...">
+    <div id="tableContainer">Loading data...</div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script>
+    let csvData = [];
+    fetch('devpost.csv')
+      .then(res => res.text())
+      .then(text => {
+        const results = Papa.parse(text.trim(), {header: true, skipEmptyLines: true});
+        csvData = results.data;
+        renderTable(csvData);
+      });
+
+    document.getElementById('searchBar').addEventListener('input', function(e) {
+      const query = e.target.value.toLowerCase();
+      if (!csvData.length) return;
+      const filtered = csvData.filter(row =>
+        Object.values(row).some(cell => (cell || '').toLowerCase().includes(query))
+      );
+      renderTable(filtered);
+    });
+
+    function renderTable(data) {
+      if (!data.length) {
+        document.getElementById('tableContainer').innerHTML = "<p>No data found.</p>";
+        return;
+      }
+      let html = "<table><thead><tr>";
+      html += "<th>NAME</th><th>DEVPOST</th><th>DESCRIPTION</th>";
+      html += "</tr></thead><tbody>";
+      data.forEach(row => {
+        html += "<tr>";
+        html += `<td><a href="${row["DEVPOST LINK"]}" target="_blank" rel="noopener">${row.NAME}</a></td>`;
+        html += `<td><a href="${row["DEVPOST LINK"]}" target="_blank" rel="noopener">${row["DEVPOST LINK"]}</a></td>`;
+        html += `<td>${row.DESCRIPTION}</td>`;
+        html += "</tr>";
+      });
+      html += "</tbody></table>";
+      document.getElementById('tableContainer').innerHTML = html;
+    }
+  </script>
+</body>
+</html>
